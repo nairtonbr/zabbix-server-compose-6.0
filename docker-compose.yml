@@ -441,33 +441,49 @@ secrets:
     file: ./zabbix/env_vars/.MYSQL_ROOT_USER
   MYSQL_ROOT_PASSWORD:
     file: ./zabbix/env_vars/.MYSQL_ROOT_PASSWORD
-#  client-key.pem:
-#    file: ./env_vars/.ZBX_DB_KEY_FILE
-#  client-cert.pem:
-#    file: ./env_vars/.ZBX_DB_CERT_FILE
-#  root-ca.pem:
-#    file: ./env_vars/.ZBX_DB_CA_FILE
-#  server-cert.pem:
-#    file: ./env_vars/.DB_CERT_FILE
-#  server-key.pem:
-##    file: ./env_vars/.DB_KEY_FILE 
-services:
-    db:
-        image: postgres:9.5
-        environment:
-            - POSTGRES_USER=netbox
-            - POSTGRES_PASSWORD=netbox
+@@ -15,30 +15,19 @@ services:
+    - ./configuration:/etc/netbox/config:z,ro
+    - ./reports:/etc/netbox/reports:z,ro
+    - ./scripts:/etc/netbox/scripts:z,ro
+    - netbox-nginx-config:/etc/netbox-nginx:z
+    - netbox-static-files:/opt/netbox/netbox/static:z
+    - netbox-media-files:/opt/netbox/netbox/media:z
+    ports:
+    - "8080"
+  netbox-worker:
+    <<: *netbox
+    depends_on:
+    - redis
+    entrypoint:
+    - python3
+    - /opt/netbox/venv/bin/python
+    - /opt/netbox/netbox/manage.py
+    command:
+    - rqworker
 
-    netbox:
-        image: pitkley/netbox:latest # OR ghcr.io/pitkley/netbox:latest
-        depends_on:
-            - db
-        ports:
-            - "8000:8000"
-        environment:
-            - "ALLOWED_HOSTS=netbox.dev localhost"
-            - "DB_HOST=db"
-            - "DB_NAME=netbox"
-            - "DB_USER=netbox"
-            - "DB_PASS=netbox"
-            - "SECRET_KEY=" # change me
+  # nginx
+  nginx:
+    command: nginx -c /etc/netbox-nginx/nginx.conf
+    image: nginx:1.19-alpine
+    depends_on:
+    - netbox
+    ports:
+    - 8080
+    volumes:
+    - netbox-static-files:/opt/netbox/netbox/static:ro
+    - netbox-nginx-config:/etc/netbox-nginx/:ro
+    ports: []
+
+  # postgres
+  postgres:
+@@ -66,10 +55,6 @@ services:
+    env_file: env/redis-cache.env
+
+volumes:
+  netbox-static-files:
+    driver: local
+  netbox-nginx-config:
+    driver: local
+  netbox-media-files:
+    driver: local
+  netbox-postgres-data:    
