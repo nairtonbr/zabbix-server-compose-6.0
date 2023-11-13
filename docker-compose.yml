@@ -451,3 +451,23 @@ secrets:
 #    file: ./env_vars/.DB_CERT_FILE
 #  server-key.pem:
 ##    file: ./env_vars/.DB_KEY_FILE 
+services:
+    db:
+        image: postgres:9.5
+        environment:
+            - POSTGRES_USER=netbox
+            - POSTGRES_PASSWORD=netbox
+
+    netbox:
+        image: pitkley/netbox:latest # OR ghcr.io/pitkley/netbox:latest
+        depends_on:
+            - db
+        ports:
+            - "8000:8000"
+        environment:
+            - "ALLOWED_HOSTS=netbox.dev localhost"
+            - "DB_HOST=db"
+            - "DB_NAME=netbox"
+            - "DB_USER=netbox"
+            - "DB_PASS=netbox"
+            - "SECRET_KEY=" # change me
