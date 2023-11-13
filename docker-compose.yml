@@ -389,7 +389,7 @@ services:
     environment:
       INFLUXDB_DB: actualdb
  grafana:
-   image: grafana/grafana:9.4.0
+   image: grafana/grafana:latest
    restart: always
    ports:
       - "3000:3000"
